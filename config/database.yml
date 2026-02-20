@@ -78,7 +78,5 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
-  <<: *default
-  database: pax_measurer_production
-  username: pax_measurer
-  password: <%= ENV["PAX_MEASURER_DATABASE_PASSWORD"] %>
+  primary:
+    url: <%= ENV["DATABASE_URL"] %>
