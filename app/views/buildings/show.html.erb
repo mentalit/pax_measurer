@@ -2,6 +2,8 @@
 
 <%= render @building %>
 
+<%= link_to "Rooms", building_rooms_path(@building) %>
+
 <div>
   <%= link_to "Edit this building", edit_building_path(@building) %> |
   <%= link_to "Back to buildings", buildings_path %>

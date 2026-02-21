@@ -2,6 +2,8 @@
 
 <%= render @room %>
 
+<%= link_to "Measurements", room_measurements_path(@room) %>
+
 <div>
   <%= link_to "Edit this room", edit_room_path(@room) %> |
   <%= link_to "Back to rooms", :back %>
