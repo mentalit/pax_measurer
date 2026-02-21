@@ -1,7 +1,7 @@
+/* ---------------- MAIN BUTTON ATTACH ---------------- */
+
 function attachMeasurementButtons() {
 
-
-	alert("measurement js loaded")  
   // avoid duplicate listeners after turbo navigation
   document.querySelectorAll(".measure-btn").forEach(btn => {
     if (btn.dataset.bound) return
@@ -22,17 +22,62 @@ function attachMeasurementButtons() {
         }
       }
 
-      // 2️⃣ Browser fallback measurement (iPhone Safari)
+      // 2️⃣ Browser fallback measurement
       await browserMeasure(field)
     })
   })
 }
+
+/* ---------------- FIELD FILL ---------------- */
 
 function fillField(field, value) {
   const input = document.querySelector(`[data-measure='${field}']`)
   if (!input) return
   input.value = value
   input.focus()
+}
+
+/* ---------------- CAPTURE UI ---------------- */
+
+function showCaptureUI(field) {
+
+  const overlay = document.createElement("div")
+  overlay.id = "measure-overlay"
+
+  overlay.innerHTML = `
+    <div class="measure-panel">
+      <div class="crosshair">+</div>
+      <div id="angle-readout">0°</div>
+      <button id="capture-btn">CAPTURE</button>
+      <button id="cancel-btn">Cancel</button>
+    </div>
+  `
+
+  document.body.appendChild(overlay)
+
+  document.getElementById("capture-btn").onclick = () => {
+    const radians = pitch * Math.PI / 180
+    const h = parseFloat(document.getElementById("phone-height").value)
+
+    if (!h) {
+      alert("Enter your eye height first")
+      return
+    }
+
+    const distance = Math.abs(h * Math.tan(radians)).toFixed(2)
+
+    fillField(field, distance)
+    overlay.remove()
+  }
+
+  document.getElementById("cancel-btn").onclick = () => overlay.remove()
+
+  // live angle display
+  const interval = setInterval(() => {
+    const el = document.getElementById("angle-readout")
+    if (!el) return clearInterval(interval)
+    el.innerText = pitch.toFixed(1) + "°"
+  }, 50)
 }
 
 /* ---------------- BROWSER MEASUREMENT ---------------- */
@@ -58,32 +103,17 @@ async function enableMotion() {
 
 async function browserMeasure(field) {
 
-  const heightInput = document.getElementById("phone-height")
-  const h = parseFloat(heightInput?.value)
-
-  if (!h) {
-    alert("Enter your eye height first")
-    return
-  }
-
   const ok = await enableMotion()
   if (!ok) {
     alert("Motion permission denied")
     return
   }
 
-  alert("Aim the TOP EDGE of your phone at the base of the wall, then tap OK")
-
-  const radians = pitch * Math.PI / 180
-  const distance = Math.abs(h * Math.tan(radians)).toFixed(2)
-
-  fillField(field, distance)
+  // IMPORTANT: now we show the UI instead of measuring instantly
+  showCaptureUI(field)
 }
 
 /* ---------------- TURBO EVENTS ---------------- */
 
-// first page load
 document.addEventListener("turbo:load", attachMeasurementButtons)
-
-// after frame navigation
 document.addEventListener("turbo:frame-load", attachMeasurementButtons)
