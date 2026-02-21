@@ -1,89 +1,8 @@
-/* ---------------- MAIN BUTTON ATTACH ---------------- */
-
-function attachMeasurementButtons() {
-
-  // avoid duplicate listeners after turbo navigation
-  document.querySelectorAll(".measure-btn").forEach(btn => {
-    if (btn.dataset.bound) return
-    btn.dataset.bound = "true"
-
-    btn.addEventListener("click", async () => {
-
-      const field = btn.dataset.field
-
-      // 1️⃣ Try native Capacitor measurement first
-      if (window.Capacitor?.Plugins?.RoomMeasure) {
-        try {
-          const result = await window.Capacitor.Plugins.RoomMeasure.startMeasurement()
-          fillField(field, result.value)
-          return
-        } catch(e) {
-          console.log("Native measurement unavailable, fallback to browser")
-        }
-      }
-
-      // 2️⃣ Browser fallback measurement
-      await browserMeasure(field)
-    })
-  })
-}
-
-/* ---------------- FIELD FILL ---------------- */
-
-function fillField(field, value) {
-  const input = document.querySelector(`[data-measure='${field}']`)
-  if (!input) return
-  input.value = value
-  input.focus()
-}
-
-/* ---------------- CAPTURE UI ---------------- */
-
-function showCaptureUI(field) {
-
-  const overlay = document.createElement("div")
-  overlay.id = "measure-overlay"
-
-  overlay.innerHTML = `
-    <div class="measure-panel">
-      <div class="crosshair">+</div>
-      <div id="angle-readout">0°</div>
-      <button id="capture-btn">CAPTURE</button>
-      <button id="cancel-btn">Cancel</button>
-    </div>
-  `
-
-  document.body.appendChild(overlay)
-
-  document.getElementById("capture-btn").onclick = () => {
-    const radians = pitch * Math.PI / 180
-    const h = parseFloat(document.getElementById("phone-height").value)
-
-    if (!h) {
-      alert("Enter your eye height first")
-      return
-    }
-
-    const distance = Math.abs(h * Math.tan(radians)).toFixed(2)
-
-    fillField(field, distance)
-    overlay.remove()
-  }
-
-  document.getElementById("cancel-btn").onclick = () => overlay.remove()
-
-  // live angle display
-  const interval = setInterval(() => {
-    const el = document.getElementById("angle-readout")
-    if (!el) return clearInterval(interval)
-    el.innerText = pitch.toFixed(1) + "°"
-  }, 50)
-}
-
-/* ---------------- BROWSER MEASUREMENT ---------------- */
-
 let pitch = 0
 let motionReady = false
+let phoneHeight = parseFloat(localStorage.getItem("phoneHeight")) || null
+
+/* ---------------- MOTION ---------------- */
 
 async function enableMotion() {
   if (motionReady) return true
@@ -101,19 +20,114 @@ async function enableMotion() {
   return true
 }
 
-async function browserMeasure(field) {
+/* ---------------- UI ---------------- */
+
+function showOverlay(text, captureCallback) {
+  const overlay = document.createElement("div")
+  overlay.id = "measure-overlay"
+
+  overlay.innerHTML = `
+    <div class="measure-panel">
+      <div class="crosshair">+</div>
+      <div class="instruction">${text}</div>
+      <div id="angle-readout">0°</div>
+      <button id="capture-btn">CAPTURE</button>
+      <button id="cancel-btn">Cancel</button>
+    </div>
+  `
+
+  document.body.appendChild(overlay)
+
+  document.getElementById("capture-btn").onclick = () => {
+    captureCallback()
+    overlay.remove()
+  }
+
+  document.getElementById("cancel-btn").onclick = () => overlay.remove()
+
+  const interval = setInterval(() => {
+    const el = document.getElementById("angle-readout")
+    if (!el) return clearInterval(interval)
+    el.innerText = pitch.toFixed(1) + "°"
+  }, 50)
+}
+
+/* ---------------- CALIBRATION ---------------- */
+
+async function startCalibration() {
 
   const ok = await enableMotion()
-  if (!ok) {
-    alert("Motion permission denied")
+  if (!ok) return alert("Motion permission required")
+
+  let angleFloor, angleWall
+
+  showOverlay("Aim at the floor at your feet", () => {
+    angleFloor = pitch * Math.PI/180
+
+    setTimeout(() => {
+      showOverlay("Aim at the base of the wall", () => {
+        angleWall = pitch * Math.PI/180
+
+        // assume 0.5m horizontal foot distance from phone
+        const footDistance = 0.5
+
+        phoneHeight = Math.abs(
+          footDistance * Math.tan(angleFloor) /
+          (Math.tan(angleWall) - Math.tan(angleFloor))
+        )
+
+        localStorage.setItem("phoneHeight", phoneHeight)
+
+        document.getElementById("calibration-status").innerText =
+          "Calibrated ✓"
+      })
+    }, 300)
+  })
+}
+
+/* ---------------- MEASUREMENT ---------------- */
+
+function performMeasurement(field) {
+  if (!phoneHeight) {
+    alert("Please calibrate first")
     return
   }
 
-  // IMPORTANT: now we show the UI instead of measuring instantly
-  showCaptureUI(field)
+  const radians = pitch * Math.PI/180
+  const distance = Math.abs(phoneHeight * Math.tan(radians)).toFixed(2)
+
+  const input = document.querySelector(`[data-measure='${field}']`)
+  input.value = distance
+  input.focus()
 }
 
-/* ---------------- TURBO EVENTS ---------------- */
+async function browserMeasure(field) {
+  const ok = await enableMotion()
+  if (!ok) return alert("Motion permission denied")
+
+  showOverlay("Aim at the base of the wall", () => performMeasurement(field))
+}
+
+/* ---------------- BUTTON ATTACH ---------------- */
+
+function attachMeasurementButtons() {
+
+  document.querySelectorAll(".measure-btn").forEach(btn => {
+    if (btn.dataset.bound) return
+    btn.dataset.bound = "true"
+
+    btn.onclick = () => browserMeasure(btn.dataset.field)
+  })
+
+  const calBtn = document.getElementById("start-calibration")
+  if (calBtn && !calBtn.dataset.bound) {
+    calBtn.dataset.bound = "true"
+    calBtn.onclick = startCalibration
+  }
+
+  if (phoneHeight)
+    document.getElementById("calibration-status").innerText = "Calibrated ✓"
+}
 
 document.addEventListener("turbo:load", attachMeasurementButtons)
 document.addEventListener("turbo:frame-load", attachMeasurementButtons)

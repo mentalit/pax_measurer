@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Pax Measurer</string>
+    <string name="title_activity_main">Pax Measurer</string>
+    <string name="package_name">com.denis.paxmeasurer</string>
+    <string name="custom_url_scheme">com.denis.paxmeasurer</string>
+</resources>
