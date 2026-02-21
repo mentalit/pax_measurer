@@ -1,5 +1,7 @@
 function attachMeasurementButtons() {
 
+
+	alert("measurement js loaded")  
   // avoid duplicate listeners after turbo navigation
   document.querySelectorAll(".measure-btn").forEach(btn => {
     if (btn.dataset.bound) return
