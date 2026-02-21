@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PaxMeasurer</string>
+    <string name="title_activity_main">PaxMeasurer</string>
+    <string name="package_name">com.pax.measurer</string>
+    <string name="custom_url_scheme">com.pax.measurer</string>
+</resources>

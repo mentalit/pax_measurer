@@ -12,26 +12,20 @@
   <% end %>
 
   <div>
-    <%= form.label :length, style: "display: block" %>
-    <%= form.text_field :length %>
-  </div>
+  <%= form.label :length %>
+  <%= form.text_field :length, data: { measure: "length" } %>
+  <button type="button" class="measure-btn" data-field="length">📏</button>
+</div>
 
-  <div>
-    <%= form.label :width, style: "display: block" %>
-    <%= form.text_field :width %>
-  </div>
+<div>
+  <%= form.label :width %>
+  <%= form.text_field :width, data: { measure: "width" } %>
+  <button type="button" class="measure-btn" data-field="width">📏</button>
+</div>
 
-  <div>
-    <%= form.label :depth, style: "display: block" %>
-    <%= form.text_field :depth %>
-  </div>
-
-  <div>
-    <%= form.label :room_id, style: "display: block" %>
-    <%= form.text_field :room_id %>
-  </div>
-
-  <div>
-    <%= form.submit %>
-  </div>
+<div>
+  <%= form.label :depth %>
+  <%= form.text_field :depth, data: { measure: "depth" } %>
+  <button type="button" class="measure-btn" data-field="depth">📏</button>
+</div>
 <% end %>
