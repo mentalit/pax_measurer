@@ -1,3 +1,5 @@
+# config/environments/production.rb
+
 require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
@@ -95,8 +97,7 @@ Rails.application.configure do
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 
-  config.session_store :cookie_store,
-  key: '_pax_measurer_session',
-  same_site: :none,
-  secure: true
+  
 end
+
+

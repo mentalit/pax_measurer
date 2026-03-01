@@ -1,9 +1,16 @@
+// capacitor.config.json 
+
 {
   "appId": "com.denis.paxmeasurer",
   "appName": "Pax Measurer",
   "webDir": "public",
   "server": {
     "url": "https://quiet-hamlet-62537.herokuapp.com",
-    "cleartext": true
+    "iosScheme": "https",
+    "cleartext": false,
+    "allowNavigation": [
+      "quiet-hamlet-62537.herokuapp.com",
+      "*.herokuapp.com"
+    ]
   }
 }
